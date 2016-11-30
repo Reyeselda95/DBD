@@ -1,0 +1,14 @@
+-- Senetncias para crear 5 tablas, debes crear las 2 restantes
+
+create table cliente12( 
+nif char(9) constraint cpcliente12 primary key, nombre varchar(40), telefono varchar(14), email varchar(50));
+
+create table tipo12(
+codtipo number(3) constraint cptipo12 primary key, comentario varchar(30), descripcion varchar(50), tarifadiaria number(3));
+
+create table calendario12(fecha date constraint cpcalendario12 primary key);
+
+create table material12(codigo char(5) constraint cpmaterial12 primary key, estado varchar(10), tipo number(3));
+
+create table proveedor12(nif char(9) constraint proveedor12 primary key, nombre varchar(40), 
+telefono varchar(14), email varchar(50));

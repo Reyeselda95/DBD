@@ -1,0 +1,80 @@
+﻿0º) EJECUTAR crea-hotel.txt
+
+1º)ALTER TABLE calendreservas ADD alimentacion CHAR(2) CONSTRAINT ck_alimentacion CHECK(alimentacion IN ('SA','AD','MP','PC'));
+
+EJECUTAR datos-hotel.txt // cuidado con los nombres de las columnas, que te darán errores
+
+2º) create or replace procedure compruebasupcat
+is
+  cursor c1 is select numero, supmin, superficie from habitacion , categoria  where categoria=nombre;
+  begin
+    for regc1 in c1 loop
+      if(regc1.superficie=null or regc1.supmin=null) 
+        then
+	   dbms_output.put_line('****'||regc1.numero||' no tiene informacion de superficie ****');      
+      elsif(regc1.superficie<regc1.supmin) 
+         then
+           dbms_output.put_line('*** Habitacion '|| regc1.numero || ' tiene dimensión INCORRECTA ***');
+           insert into malcategoria values (regc1.numero, regc1.supmin-regc1.superficie);
+      else
+           dbms_output.put_line('Habitación '||regc1.numero||' tiene dimensión correcta');
+      end if;
+    end loop;
+	
+  end;
+
+3º) create or replace procedure listaActividades (mifecha horario.fecha%type)
+is
+	cursor c1 is select hora, actividad, descripcion from horario, actividad where mifecha=fecha and actividad=cod;
+ begin
+ for regc1 in c1 loop
+	escribir('Actividad: '|| regc1.actividad || ' Descripción: ' || regc1.descripcion || ' Hora: '|| regc1.hora );
+ end loop;
+end;
+
+4º) create or replace procedure equivalenteAdulto (adulto sustadultos.activ1%type)
+is
+	cursor c1 is select activ2, descripcion from sustadultos, actividad where adulto=activ1 and activ2=cod;
+begin
+	for regc1 in c1 loop
+		escribir('Actividad: ' || regc1.activ2 || ' Descripcion: ' || regc1.descripcion);
+	end loop;
+end;
+
+5º) create table adaptadas(num number(3) primary key references habitacion);
+
+6º)create or replace procedure CompletaAdaptadas
+is
+	cursor c1 is select numero from habitacion where piso=0 and superficie>25;
+	contador number(3):=0;
+begin
+	for regc1 in c1 loop
+		insert into adaptadas values (regc1.numero);
+		contador:=contador+1;
+	end loop;
+	escribir('Se han dado de alta ' || contador || ' habitaciones como adaptadas.');
+end;
+
+7º) create or replace procedure revisaprecios (mitemporada temporada.nombre%type)
+is
+	cursor c1 is select psa, categoria cat from pvptemporada where temporada=mitemporada;
+begin
+	for regc1 in c1 loop
+		if (regc1.psa is not null) then
+			update pvptemporada set pad = psa*1.1 where temporada=mitemporada and categoria=regc1.cat;
+			update pvptemporada set pmp = psa*1.2 where temporada=mitemporada and categoria=regc1.cat;
+			update pvptemporada set ppc = psa*1.25 where temporada=mitemporada and categoria=regc1.cat;
+		end if;	
+	end loop;
+end;
+
+8º) create or replace procedure sinsusutituto
+is
+	cursor c1 is select cod, descripcion from actividad where cod not in (select activ1 from sustadultos union select activ1 from sustniños union select activ1 from susttodos);
+	
+begin
+	for regc1 in c1 loop
+		escribir('Actividad: ' || regc1.cod || ' Descripción: ' || regc1.descripcion || ' no tiene sustituto.');
+	end loop;
+	
+end;

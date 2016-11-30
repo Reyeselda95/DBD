@@ -1,0 +1,86 @@
+﻿1º) create or replace trigger sustituir_niños
+before insert or update on sustniños
+for each row
+begin
+if(:new.activ1=:new.activ2) then
+raise_application_error(-20601, 'La actividad '|| :new.activ1 || ' no se puede sustituir a sí misma');
+end if;
+end;
+
+create or replace trigger sustituir_todos
+before insert or update on susttodos
+for each row
+begin
+if(:new.activ1=:new.activ2) then
+raise_application_error(-20601, 'La actividad '|| :new.activ1 || ' no se puede sustituir a sí misma');
+end if;
+end;
+
+create or replace trigger sustituir_adultos
+before insert or update on sustadultos
+for each row
+begin
+if(:new.activ1=:new.activ2) then
+raise_application_error(-20601, 'La actividad '|| :new.activ1 || ' no se puede sustituir a sí misma');
+end if;
+end;
+
+2º) create or replace trigger superficie_categoria
+before insert or update on categoria 
+for each row
+when(new.supmax is not null)
+begin
+if(:new.supmin>=:new.supmax) then
+raise_application_error(-20601, 'La superficie mínima tiene que ser menor que la máxima')
+end if;
+end;
+
+3º) create or replace trigger plan_actividades
+before insert on horario
+for each row
+declare 
+total number(1);
+auxdesc actividad.descripcion%type;
+begin
+select count(distinct actividad) into total from horario where :new.fecha=fecha;
+if (total>=4) then 
+select descripcion into auxdesc from actividad where cod=:new.actividad;
+raise_application_error(-20601, 'La actividad '||auxdesc||' debe realizarse otro día.');
+end if;
+end;
+
+4º) create or replace trigger alta_reserva
+before insert on calendreservas
+for each row
+declare
+auxcategoria habitacion.categoria%type;
+vnif cliente.nif%type;
+cursor otras_res is 
+select * from reserva, calendreservas where codigo=reserva and cliente=vnif and fecha=:new.fecha;
+begin
+select cliente into vnif from reserva where codigo=:new.reserva;
+for res into otras_res loop
+select categoria into auxcategoria from habitacion where numero=res.habitacion;
+escribir('Habitación '||res.habitacion||' Categoria '||auxcategoria||' Alimentación '|| res.alimentacion||' Cama '||res.camasup||);
+end loop;
+end;
+
+5º) create table citas_diarias(nif char(9), fecha date, total number(1), constraint pk_citas_diarias primary key(nif, fecha));
+
+create or replace trigger control_citas
+after insert or delete or update on cita
+for each row
+declare aux number(1);
+begin
+select count(*) into aux from citas_diarias where :new.empleado=nif and fecha=:new.fecha;
+if inserting or updating then
+if (aux=0) then
+insert into citas_diarias values(:new.empleado, :new.fecha, 1);
+else
+update citas_diarias set total=total+1 where nif=:new.empleado and fecha=:new.fecha;
+end if;
+end if;
+if deleting or updating then 
+update citas_diarias set total=total-1 where nif=:old.empleado and fecha=:old.fecha;
+end if;
+end;

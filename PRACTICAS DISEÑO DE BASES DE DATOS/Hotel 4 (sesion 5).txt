@@ -1,0 +1,124 @@
+﻿1º)create or replace function preciohabitacion (numhab habitacion.numero%type, fechareserva calendario.fecha%type) return pvptemporada.psa%type
+is
+precio pvptemporada.psa%type;
+begin
+
+select psa into precio from calendario c, pvptemporada p, habitacion h
+where numero=numhab and fecha=fechareserva and h.categoria=p.categoria and p.temporada=c.temporada;
+
+return(precio);
+end;
+
+//Probar con select preciohabitacion(8,'16/08/2013') from dual;
+
+2º)create or replace function  preciocategoria (cat pvptemporada.categoria%type, mifecha date, regimen varchar) return 
+number
+is 
+v_psa pvptemporada.psa%type;
+v_pmp pvptemporada.pmp%type;
+v_ppc pvptemporada.ppc%type;
+v_pad pvptemporada.pad%type;
+begin
+
+select psa, pmp, ppc, pad into v_psa, v_pmp, v_ppc, v_pad from pvptemporada p, calendario c 
+where cat=categoria and mifecha=fecha and p.temporada=c.temporada;
+
+if regimen='PSA' then return (v_psa);
+	else if regimen='PMP' then return (v_pmp);
+		else if regimen='PPC' then return (v_ppc);
+			else return (v_pad);
+    end if;
+  end if;
+end if;
+end;
+
+// Probar con select preciocategoria('S','27/11/2012','PPC') from dual;
+
+3º) create or replace function citas (nif empservicios.nif%type, fechacita cita.fecha%type) return number
+is
+citas number;
+
+begin
+	select count(*) into citas from cita where nif=empleado and fechacita=fecha;
+return(citas);
+end;
+
+// probar con select citas('77777777S','15/11/2012') from dual;
+
+4º) create or replace function libre (nif cita.empleado%type, mifecha cita.fecha%type, mom cita.momento%type) return varchar
+is
+libre varchar(2);
+num number;
+begin 
+select count(*) into num from cita where nif=empleado and mifecha=fecha and mom=momento;
+if num=0 then libre:='SI';
+else libre:='NO';
+end if;
+return (libre);
+end;
+
+//probar con select libre('77777777S','18/11/2012','2')from dual;
+
+5º)create or replace function gastodiario (numhab consumir.habitación%type, mifecha consumir.fecha%type) return number
+is
+total number:=0;
+cursor c1 is select cantidad, servicio, precio from consumir c, servicio s where numhab=habitación and mifecha=fecha and 
+codigo=servicio;
+begin
+	for regc1 in c1 loop
+		total:=total+(regc1.precio * regc1.cantidad);
+	end loop;
+return(total);
+end;
+
+//probar con select gastodiario(1,'12/11/2012') from dual;
+
+6º) create or replace function gastototal(num reserva.codigo%type) return number
+is
+total number:=0;
+cursor c1 is select habitacion, fecha from calendreservas c where num=reserva;
+begin
+	for regc1 in c1 loop
+	total:=total+gastodiario(regc1.habitacion, regc1.fecha);
+	end loop;
+return(total);
+end;
+
+//probar con select gastototal(2) from dual;
+
+7º) create or replace function solicitado(cod cita.tratamiento%type) return number
+is 
+clientes number;
+begin
+select count(distinct cliente) into clientes from cita where cod=tratamiento; // Aqui no deja claro de si son los mismos clientes o distintos, por lo que yo lo he puesto para que sean distintos clientes que hayan pedido el tratamiento
+return(clientes);
+end;
+
+//probar con select solicitado('MAS01') from dual;
+
+8º)create or replace function reservatelefono(cod restelefono.reserva%type) return varchar2
+is
+nom empleado.nombre%type;
+begin
+select nombre into nom from empleado, restelefono where cod=reserva and nif=emprecepcion;
+return(nom);
+end;
+
+//probar con select reservatelefono(1) from dual;
+
+9º)create or replace function menosguardias return empleado.nombre%type
+is 
+cursor guardias is select nombre from empleado, calendario where nif=emplimpieza 
+group by nif, nombre
+having count(*)<=all(select count(*) from calendario where emplimpieza is not null group by emplimpieza) order by nombre;
+auxnombre empleado.nombre%type;
+contador number(1):=0;
+begin
+for g in guardias loop
+	contador:=contador+1;
+	auxnombre:=g.nombre;
+	if contador=1 then exit;
+	end if;
+end loop;
+return(auxnombre);
+end;

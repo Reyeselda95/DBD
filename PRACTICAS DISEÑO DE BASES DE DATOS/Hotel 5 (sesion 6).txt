@@ -1,0 +1,47 @@
+﻿1º) create or replace view individuales as select numero from habitacion where categoria='I';
+
+2º) create or replace view individuales_check as select numero from habitacion where categoria='I' with check option;
+
+3º) create or replace view individuales_cat as select numero, categoria from habitacion where categoria='I'; 
+
+4º) create or replace view individuales_cat_check as select numero, categoria from habitacion where categoria='I' with check option; 
+
+5º) 
+a) insert into individuales values (100);
+b) insert into individuales_check values (110); //Violacion de clausula where en select with check option
+c) insert into individuales_cat values (120,'S');
+d) insert into individuales_cat_check values (130,'S'); //Violacion de clausula where en select with check option
+e) insert into individuales_cat_check values (140, 'I');
+
+6º) create or replace view dobles_check as select numero from habitacion where categoria='D' with check option;
+
+insert into dobles_check values (150);
+//Se diferencia con el 5.b en que la categoria por defecto es 'D' por lo que al hacer una inserción de una habitación sin especificar categoría en el 5.b viola el where de la select mientras que en dobles_check no.
+
+7º) create or replace view clientes_alicante as select nombre, localidad, telefono from cliente where provincia='Alicante';
+
+insert into clientes_alicante values ('Rodrigo López','Alcoy',646565444);
+//No se puede hacer una inserción NULL en el campo NIF de la tabla cliente por lo que no se realiza la inserción
+
+8º) create or replace view clientes_alicante_nif as select nif, nombre, localidad, telefono from cliente where provincia='Alicante';
+
+insert into clientes_alicante_nif values ('99999999Z','Rodrigo López','Alcoy',646565444);
+insert into clientes_alicante_nif values ('21668899P','Miguel Bermejo','Villena',646555555);// El dni ya está asociado a una fila en la tabla por lo que nos da error de clave primaria duplicada.
+
+9º) create or replace view contadorsustituciones as 
+select cod, descripcion, 'ADULTO' tipo, count(*) total 
+from actividad, sustadultos
+where cod=activ1 
+group by cod, descripcion
+union
+	select cod, descripcion, 'TODOS' tipo, count(*) total
+	from actividad, susttodos
+	where cod=activ1 
+	group by cod, descripcion
+union
+	select cod, descripcion, 'NIÑOS' tipo, count(*) total
+	from actividad, sustniños
+	where cod=activ1
+	group by cod, descripcion;
+
+insert into contadorsustituciones values ('PAC', 'Paseo a caballo', 'ADULTOS', 5); //No está permitido porque no se especifica dónde está sustituida, ni por qué actividades, además el atributo ADULTOS sólamente indica en la vista a qué tipo pertenece la actividad que puede ser sustituida

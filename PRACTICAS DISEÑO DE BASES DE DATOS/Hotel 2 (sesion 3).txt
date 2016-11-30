@@ -1,0 +1,64 @@
+﻿1º) 
+CREATE TABLE calendario (fecha DATE PRIMARY KEY, temporada VARCHAR(5));
+
+CREATE TABLE hora (hora NUMBER(2) PRIMARY KEY);
+
+CREATE TABLE actividad (cod CHAR(4) PRIMARY KEY,descripcion VARCHAR(100) NOT NULL);
+
+CREATE TABLE horario(fecha NOT NULL REFERENCES calendario ,
+hora NOT NULL REFERENCES hora,
+actividad NOT NULL REFERENCES actividad,
+PRIMARY KEY (fecha, hora),
+UNIQUE (fecha, actividad));
+
+CREATE TABLE ActNIÑOS (actividad PRIMARY KEY REFERENCES actividad);
+
+CREATE TABLE ActADULTOS (actividad PRIMARY KEY REFERENCES actividad);
+
+CREATE TABLE ActTodos (actividad PRIMARY KEY REFERENCES actividad);
+
+CREATE TABLE SustNIÑOS (activ1 REFERENCES ActNIÑOS,
+activ2 REFERENCES ActNIÑOS,
+PRIMARY KEY(activ1, activ2));
+
+CREATE TABLE SustADULTOS (activ1 REFERENCES ActADULTOS,
+activ2 REFERENCES ActADULTOS,
+PRIMARY KEY(activ1, activ2));
+
+CREATE TABLE SustTODOS (activ1 REFERENCES ActTODOS,
+activ2 REFERENCES ActTODOS,
+PRIMARY KEY(activ1, activ2));
+
+2º) ALTER TABLE HABITACIÓN ADD (superficie number(4,2), piso number(2));
+
+3º)
+UPDATE HABITACIÓN SET superficie=17 WHERE numero=1;
+UPDATE HABITACIÓN SET superficie=14 WHERE numero=2;
+UPDATE HABITACIÓN SET superficie=18 WHERE numero=3;
+
+4º) CREATE TABLE malcategoria (num NUMBER(3) primary key, dif NUMBER(4,2));
+
+declare
+  cursor c1 is select numero, supmin, superficie from habitación , categoria  where categoria=nombre;
+  begin
+    for regc1 in c1 loop
+      if(regc1.superficie<regc1.supmin) 
+         then
+           dbms_output.put_line('*** Habitacion '|| regc1.numero || ' tiene dimensióne INCORRECTA ***');
+           insert into malcategoria values (regc1.numero, regc1.supmin-regc1.superficie);
+         else
+           dbms_output.put_line('Habitación '||regc1.numero||' tiene dimensión correcta');
+      end if;
+    end loop;
+  end;
+
+5º)
+declare
+	cursor c2 is select activ2, count(activ1) numsust, fecha, descripcion 
+  from sustadultos, actividad, horario  where activ2=cod and actividad=activ1 
+  group by fecha, descripcion, activ2 having count(*)>=3;
+	begin
+		for regc2 in c2 loop
+			dbms_output.put_line(regc2.activ2||','|| regc2.descripcion||': conflicto '|| regc2.numsust ||' situaciones en la fecha '|| regc2.fecha);
+		end loop;
+	end;

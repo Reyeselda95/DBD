@@ -1,0 +1,15 @@
+﻿ALEJANDRO REYES ALBILLAR 
+
+1.)select s.articulo, entrega, numpedido, linea 
+from stock s left join linped l 
+on disponible between 65 and 75 and s.articulo=l.articulo
+
+// el disponible between 65 and 75 DEBE IR EN EL WHERE
+
+
+2.)select a.cod,/* a.pvp, avg(precio) media,*/ a.pvp-avg(precio) diferencia
+from articulo a, linped l 
+where a.cod=l.articulo 
+group by a.cod, a.pvp
+
+// Lo que está entre /*''*/ ME SOBRA

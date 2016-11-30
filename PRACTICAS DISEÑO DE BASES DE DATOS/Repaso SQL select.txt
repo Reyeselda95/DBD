@@ -1,0 +1,74 @@
+﻿1. select email, nombre, apellidos from usuario order by nombre, apellidos;
+
+2. select p.* from provincia p, usuario where provincia=codp;
+
+3. select distinct p.* from provincia p, usuario where provincia=codp order by p.nombre;
+
+4. select * from articulo where marca is null;
+
+5. select u.email, 'No tiene telefono' from usuario u, provincia p where u.provincia=p.codp and p.nombre like 'Murcia' and telefono is null;
+
+6.select p.fecha, p.usuario, a.cod, a.nombre, a.marca, a.pvp, l.precio
+from pedido p, articulo a, linped l, tv t
+where p.numpedido=l.numpedido and l.articulo=a.cod and l.numpedido=1 and a.cod=t.cod;
+
+7. select email from usuario where codpos not in ('02012', '02018', '02032');
+
+8. select numpedido, fecha, nombre, apellidos from pedido, usuario where email=usuario  and apellidos like '%MARTINEZ%';
+
+9. select cod, nombre, marca from articulo where pvp=(select max(pvp) from articulo);
+
+10. select a.cod, a.nombre, a.pvp from articulo a, camara c 
+where a.cod=c.cod and pvp=(select max(pvp) from articulo a, camara c where c.cod=a.cod and c.tipo like '%réflex%');
+
+11. select distinct a.marca from articulo a, tv t where a.marca not in (select marca from articulo a, tv t where a.cod=t.cod);
+
+12. select a.cod, a.nombre, c.tipo, a.marca from articulo a, camara c where a.cod=c.cod and a.marca in ('Nikon', 'LG', 'Sigma');
+
+13. select a.cod, nombre, resolucion, sensor from articulo a left join camara c on a.cod=c.cod;
+
+14. select c.articulo, a.nombre, a.pvp from cesta c, articulo a where c.articulo=a.cod and to_char(c.fecha,'YYYY')=2010;
+
+15. select a.*, c.usuario, c.fecha from articulo a left join cesta c on a.cod=c.articulo and to_char(c.fecha,'YYYY')=2010;
+select * from articulo left join cesta on cod=articulo and to_char(fecha,'YYYY')=2010; (la columna articulo es igual a cod, por lo que no necesitamos verla, por eso prefiero utilizar la select descrita arriba)
+ 
+16. select count(*) total_usuarios from usuario;
+
+17. select count(distinct provincia) num_provincias from usuario;
+
+18. select max(pantalla) tam_max_pantalla from tv;
+
+19. select min(nacido) mas_viejo from usuario;
+
+20. select linea numlínea, articulo, (precio*cantidad) total from linped where numpedido=1;
+
+21. select l.numpedido, p.fecha, u.nombre, u.apellidos from linped l, pedido p, usuario u where l.numpedido=p.numpedido and u.email=p.usuario and (cantidad*precio)=(select max(cantidad*precio) from linped);
+
+22. select marca, count(marca) from articulo group by marca;
+
+23. select dni, nombre, apellidos, email from usuario u, pedido p where u.email=p.usuario group by dni, nombre, apellidos, email having count(*)>1;
+
+24. select p.numpedido, p.usuario, count(distinct articulo)articulo_distinto from pedido p, linped l where p.numpedido=l.numpedido group by p.numpedido, usuario having count(distinct l.articulo)>4;
+
+25. select p.codp, p.nombre, count(u.email) from provincia p, usuario u where p.codp=u.provincia group by p.codp, p.nombre having count(u.email)>50;
+
+26. select count(*) from articulo 
+where cod not in (select cod from camara 
+union select cod from memoria
+union select cod from tv
+union select cod from pack
+union select cod from objetivo);
+
+27. select cod, nombre, count(l.numpedido)añadido_pedido from articulo a left join linped l on a.cod=l.articulo group by cod, nombre;
+
+28. select p.numpedido, usuario from pedido p, linped l where p.numpedido=l.numpedido group by p.numpedido, usuario having sum(precio*cantidad)>4000;
+
+29. select a.cod, marca, pvp from articulo a where marca like 'Samsung' and pvp is not null and a.cod not in (select articulo from linped);
+
+30. select a.cod from articulo a, cesta c, linped l where a.cod=c.articulo or a.cod=l.articulo;
+
+31. select email, nombre from usuario where email not in (select usuario from pedido) union select email, nombre from pedido, usuario where usuario=email group by email, nombre having count(*)=1;
+
+32. select email, nombre from usuario where email not in (select usuario from pedido p, camara c, linped l where l.numpedido=p.numpedido and l.articulo=c.cod);
+
+33. select sysdate from dual;

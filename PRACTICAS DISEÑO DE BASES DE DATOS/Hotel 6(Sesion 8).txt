@@ -1,0 +1,121 @@
+﻿1º) create or replace function precioservicio(cod servicio.codigo%type) return 
+servicio.precio%type
+is
+miprecio servicio.precio%type;
+
+begin
+select precio into miprecio from servicio where cod=codigo;
+return(miprecio);
+
+exception
+when no_data_found then 
+	escribir('No existe servicio con ese código');
+	return null;
+end;
+
+2º) create or replace function mediaregimen (cat pvptemporada.categoria%type, reg calendreservas.alimentacion%type) return number
+is
+miprecio_psa pvptemporada.psa%type;
+miprecio_pmp pvptemporada.pmp%type;
+miprecio_ppc pvptemporada.ppc%type;
+miprecio_pad pvptemporada.pad%type;
+begin
+select avg(psa), avg(pmp), avg(ppc), avg(pad) into miprecio_psa, miprecio_pmp, miprecio_ppc, miprecio_pad
+from pvptemporada where cat=categoria;
+
+if reg='SA' then return (miprecio_psa);
+	else if reg='MP' then return (miprecio_pmp);
+		else if reg='PC' then return (miprecio_ppc);
+			else if reg='AD' then return (miprecio_pad);
+        else return null;
+      end if;
+		end if;
+	end if;
+end if;
+end;
+
+3º)create or replace procedure listapreciomediocategoria is
+cursor c1 is select mediaregimen('D','SA') psa, mediaregimen('D','MP') pmp, mediaregimen('D','PC') ppc, mediaregimen('D','AD') pad from dual;
+cursor c2 is select mediaregimen('DT','SA') psa, mediaregimen('DT','MP') pmp, mediaregimen('DT','PC') ppc, mediaregimen('DT','AD') pad from dual;
+cursor c3 is select mediaregimen('I','SA') psa, mediaregimen('I','MP') pmp, mediaregimen('I','PC') ppc, mediaregimen('I','AD') pad from dual;
+cursor c4 is select mediaregimen('S','SA') psa, mediaregimen('S','MP') pmp, mediaregimen('S','PC') ppc, mediaregimen('S','AD') pad from dual;
+begin 
+for regc1 in c1 loop
+	escribir('Categoría: D Precio SA: '|| regc1.psa ||' Precio MP: '|| regc1.pmp ||' Precio PC: '|| regc1.ppc ||' Precio AD: '|| regc1.pad );
+end loop;
+for regc2 in c2 loop
+	escribir('Categoría: DT Precio SA: '|| regc2.psa ||' Precio MP: '|| regc2.pmp ||' Precio PC: '|| regc2.ppc ||' Precio AD: '|| regc2.pad );
+end loop;
+for regc3 in c3 loop
+	escribir('Categoría: I Precio SA: '|| regc3.psa ||' Precio MP: '|| regc3.pmp ||' Precio PC: '|| regc3.ppc ||' Precio AD: '|| regc3.pad );
+end loop;
+for regc4 in c4 loop
+	escribir('Categoría: S Precio SA: '|| regc4.psa ||' Precio MP: '|| regc4.pmp ||' Precio PC: '|| regc4.ppc ||' Precio AD: '|| regc4.pad );
+end loop;
+end;
+
+4º)create or replace function reservadasenfecha(mifecha calendreservas.fecha%type, micategoria habitacion.categoria%type) return number
+is
+count1 number(3);
+begin
+select count(*) into count1 from calendreservas, habitacion where fecha=mifecha and habitacion=numero and micategoria=categoria;
+return count1;
+end;
+
+//La siguiente select devolverá 4
+select reservadasenfecha('15/11/2012','D') from dual;
+
+5º) create or replace function gastohabitacionreservada (mireserva calendreservas.reserva%type, mihab calendreservas.habitacion%type) return number
+is
+total number:=0;
+cursor c1 is select servicio, cantidad from calendreservas cal, consumir con where mireserva=reserva and mihab=habitacion and habitacion=habitación and cal.fecha=con.fecha;
+begin
+for regc1 in c1 loop
+	total:=total+(precioservicio(regc1.servicio)*regc1.cantidad);
+end loop;
+return total;
+end;
+
+//La siguiente select devuelve 7
+select gastohabitacionreservada(1,1) from dual;
+
+6º) create or replace function gastoserviciosreserva(mireserva calendreservas.reserva%type)return number
+is 
+total number(3):=0;
+cursor c1 is select habitacion from calendreservas where mireserva=reserva;
+begin
+for regc1 in c1 loop
+	total:=total+gastohabitacionreservada(mireserva, regc1.habitacion);
+end loop;
+return total;
+end;
+
+//La siguiente select devuelve 7
+select gastoserviciosreserva(1) from dual;
+
+7º) create table clienteVIP(nif char(9) primary key references cliente);
+
+8º) create or replace function reservasclienteanyo(minif reserva.cliente%type,mianyo number) return number
+is
+total number(5):=0;
+cursor c1 is select reserva from calendreservas, reserva where minif=cliente and codigo=reserva and to_char(fecha, 'YYYY')=mianyo;
+begin
+for regc1 in c1 loop
+	total:=total+gastoserviciosreserva(regc1.reserva);
+end loop;
+return total;
+end;
+
+//La siguiente select devuelve 7
+select reservasclienteanyo('21446688A',2012) from dual;
+
+9º)create or replace procedure VIP(preciovip number)
+is 
+cursor c1 is select cliente from reserva;
+begin
+for regc1 in c1 loop
+if (reservasclienteanyo(regc1.cliente, to_char(sysdate, 'YYYY'))>=preciovip) then
+		insert into clienteVIP values (regc1.cliente);
+	end if;
+end loop;
+end;

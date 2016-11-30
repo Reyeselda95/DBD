@@ -1,0 +1,88 @@
+﻿1º) CREATE TABLE temporada (nombre varchar(5) constraint cp_nomtemp primary key);
+
+CREATE TABLE categoria (nombre varchar(2) constraint cp_nomcat primary key,
+constraint ck_nomcat check (nombre in ('D', 'DT', 'I', 'S')),
+descripción varchar(80),
+supMin number(4,2),
+supMax number(4,2));
+
+CREATE TABLE pvptemporada(categoria, temporada,
+pSA number(3), pAD number(3), pMP number(3), pPC number(3),
+primary key(categoria, temporada),
+constraint fk_cat foreign key (categoria) references categoria,
+constraint fk_temp foreign key(temporada) references temporada);
+
+CREATE TABLE habitación(numero number(3) primary key, 
+categoria not null references categoria);
+
+2º) ALTER TABLE categoria modify(descripción NOT NULL);
+
+ALTER TABLE temporada modify nombre CONSTRAINT ck_temp check (nombre in ('BAJA','MEDIA','ALTA'));
+
+ALTER TABLE habitación modify categoria default 'D';
+
+ALTER TABLE pvptemporada modify pSA default 60;
+
+3º) CREATE TABLE t1 (a number(2), b number(2), c number(2), d number(2), primary key(a,b));
+CREATE TABLE t2 (a number(2) primary key, b number(2) not null unique, c number(2), d number(2));
+CREATE TABLE t3 (a number(2) primary key, b number(2) not null, c number(2) not null, d number(2), unique(b,c));
+CREATE TABLE t4 (a number(2) primary key, b number(2) not null unique, c number(2) not null unique, d number(2));
+
+4º) 
+INSERT INTO categoria (nombre, descripción, supmin) values ('D', 'SECADOR, MINIBAR, AMPLIA, DOS CAMAS, ADMITE SUPLETORIA', 15);
+INSERT INTO categoria (nombre, descripción, supmin) values ('DT', 'SECADOR, MINIBAR, AMPLIA, DOS CAMAS, ADMITE SUPLETORIA, TERRAZA AL PARQUE', 15);
+INSERT INTO categoria (nombre, descripción, supmax) values ('I', 'UNA CAMA, SECADOR', 12);
+INSERT INTO temporada (nombre) values ('ALTA');
+INSERT INTO temporada (nombre) values ('MEDIA');
+INSERT INTO temporada (nombre) values ('BAJA');
+INSERT INTO habitación values (1, 'D');
+INSERT INTO habitación values (2, 'D');
+INSERT INTO habitación values (3, 'D');
+INSERT INTO habitación values (3, 'I'); // ERROR, SE DUPLICA CLAVE PRIMARIA
+INSERT INTO habitación values (4, 'I');
+INSERT INTO habitación values (5, 'E'); // ERROR, NO EXISTE CATEGORIA E, RESTRINGIDO A (I, D, DT, S)
+INSERT INTO habitación values (5, 'DT');
+INSERT INTO habitación values (6, 'DT');
+
+5º) 
+INSERT INTO pvptemporada (categoria, temporada) values ('I', 'ALTA');
+INSERT INTO pvptemporada (categoria, temporada) values ('I', 'MEDIA');
+INSERT INTO pvptemporada (categoria, temporada) values ('I', 'BAJA');
+INSERT INTO pvptemporada (categoria, temporada, psa) values ('D', 'ALTA', 65);
+INSERT INTO pvptemporada (categoria, temporada, psa) values ('D', 'MEDIA', 65);
+INSERT INTO pvptemporada (categoria, temporada, psa) values ('D', 'BAJA', 65);
+INSERT INTO pvptemporada (categoria, temporada) values ('DT', 'ALTA');
+INSERT INTO pvptemporada (categoria, temporada) values ('DT', 'MEDIA');
+INSERT INTO pvptemporada (categoria, temporada) values ('DT', 'BAJA');
+INSERT INTO pvptemporada (categoria, temporada) values ('S', 'ALTA'); // ERROR, NO SE HA INSERTADO LA CATEGORIA S
+INSERT INTO pvptemporada (categoria, temporada) values ('S', 'MEDIA'); // ERROR, NO SE HA INSERTADO LA CATEGORIA S
+INSERT INTO pvptemporada (categoria, temporada) values ('S', 'BAJA'); // ERROR, NO SE HA INSERTADO LA CATEGORIA S
+
+6º) DELETE FROM categoria where nombre='S'; // NO DA ERROR PERO NO BORRA NINGUNA FILA AL NO CUMPLIR NINGUNA LA CONDICION
+
+7º) DELETE FROM categoria where nombre='D'; // NO TE DEJA BORRAR PORQUE EXISTE UNA CLAVE AJENA APUNTANDO AL VALOR 'D' DE LA TABLA
+
+8º) UPDATE pvptemporada SET psa='100' where categoria='DT' and temporada='BAJA';
+UPDATE pvptemporada SET psa='115' where categoria='DT' and temporada='MEDIA';
+UPDATE pvptemporada SET psa='140' where categoria='DT' and temporada='ALTA';
+
+9º) INSERT INTO habitación (numero) values (7); // POR DEFECTO PONDRÁ LA CATEGORIA A 'D'
+
+10º) 
+CREATE TABLE NT1 (num1 number(3) primary key, num2 number(3) default 1 null);
+CREATE TABLE NT2 (num1 number(3) primary key, num2 number(3) null );
+CREATE TABLE NT3 (num1 number(3) primary key, num2 number(3) default 6 not null);
+CREATE TABLE NT4 (num1 number(3) primary key, num2 number(3)  not null);
+
+INSERT INTO NT1 (num1, num2) VALUES (1,null);
+INSERT INTO NT1 (num1, num2) VALUES (2,default);
+INSERT INTO NT1 VALUES (); // ERROR, FALTA UNA EXPRESION
+INSERT INTO NT2 (num1, num2)VALUES (1,null);
+INSERT INTO NT2 (num1, num2)VALUES (2,default);
+INSERT INTO NT2 VALUES (); // ERROR, FALTA UNA EXPRESION
+INSERT INTO NT3 (num1, num2)VALUES (1,null); // ERROR, NO SE PERMITEN NULOS
+INSERT INTO NT3 (num1, num2)VALUES (2,default);
+INSERT INTO NT3 VALUES (); // ERROR, FALTA UNA EXPRESION
+INSERT INTO NT4 (num1, num2)VALUES (1,null); // ERROR, NO SE PERMITEN NULOS
+INSERT INTO NT4 (num1, num2)VALUES (2,default); // ERROR, NO EXISTE VALOR POR DEFECTO
+INSERT INTO NT4 VALUES (); // ERROR, FALTA UNA EXPRESION
